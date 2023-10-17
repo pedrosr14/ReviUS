@@ -1,0 +1,149 @@
+version: '4.2'
+services:
+  eureka-server:
+    container_name: eureka-server
+    image: eureka-server #nombre de la imagen que hemos creado
+    ports:
+      - '8761:8761'
+    expose:
+      - '8761:8761'
+    hostname: eureka-server
+    networks:
+      - tfg-network
+
+  user-service:
+    container_name: user-service
+    image: user-service
+    build: .
+    ports:
+      - '9002:9002'
+    expose:
+      - '9002:9002'
+    depends_on:
+      - postgres_user_db
+      - gateway-service
+      - eureka-server
+    networks:
+      - tfg-network
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://user_microservice_db:5432/users
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=admin
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - EUREKA_SERVER_URL=http://eureka-server:8761/eureka
+
+  review-service:
+    container_name: review-service
+    image: review-service
+    build: .
+    ports:
+      - '9003:9003'
+    expose:
+      - '9003:9003'
+    depends_on:
+      - postgres_review_db
+      - gateway-service
+      - eureka-server
+      - user-service
+    networks:
+      - tfg-network
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://review_microservice_db:5432/protocol
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=admin
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - EUREKA_SERVER_URL=http://eureka-server:8761/eureka
+
+  search-service:
+    container_name: search-service
+    image: search-service
+    build: .
+    ports:
+      - '9004:9004'
+    expose:
+      - '9004:9004'
+    depends_on:
+      - postgres_search_db
+      - eureka-server
+      - gateway-service
+      - user-service
+    networks:
+      - tfg-network
+    environment:
+      - EUREKA_SERVER_URL=http://eureka-server:8761/eureka
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://search_microservice_db:5432/reviews
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=admin
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+
+  gateway-service:
+    container_name: gateway-service
+    image: gateway-service
+    build: .
+    ports:
+      - '9001:9001'
+    expose:
+      - '8001:8001'
+    depends_on:
+      - eureka-server
+    networks:
+      - tfg-network
+    environment:
+      - EUREKA_SERVER_URL=http://eureka-server:8761/eureka
+
+  postgres_user_db:
+    container_name: user_microservice_db
+    image: postgres:15
+    ports:
+      - '5432:5432'
+    networks:
+      - tfg-network
+    environment:
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=users
+
+  postgres_search_db:
+    container_name: search_microservice_db
+    image: postgres:15
+    ports:
+      - '5431:5431'
+    networks:
+      - tfg-network
+    environment:
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=reviews
+
+  postgres_review_db:
+    container_name: review_microservice_db
+    image: postgres:15
+    ports:
+      - '5433:5433'
+    networks:
+      - tfg-network
+    environment:
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=protocol
+
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: root
+    ports:
+      - "80:80"
+    networks:
+      - 'tfg-network'
+    depends_on:
+      - postgres_search_db
+      - postgres_review_db
+      - postgres_user_db
+
+networks:
+  tfg-network:
+
+

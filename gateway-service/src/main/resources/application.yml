@@ -1,0 +1,48 @@
+spring:
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+      routes:
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/user/**
+          filters:
+            - AuthFilter
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/login/**
+        - id: review-service
+          uri: lb://review-service
+          predicates:
+            - Path=/api/review/**
+          filters:
+            - AuthFilter
+        - id: search-service
+          uri: lb://search-service
+          predicates:
+            - Path=/api/search/**
+          filters:
+            - AuthFilter
+
+springdoc:
+  enable-native-support: true
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    config-url: /v3/api-docs/swagger-config
+    urls:
+      - url: /v3/api-docs
+        name: API Gateway
+      - url: /review-service/v3/api-docs
+        name: Review Service
+      - url: /user-service/v3/api-docs
+        name: User Service Service
+      - url: /search-service/v3/api-docs
+        name: Search Service
+

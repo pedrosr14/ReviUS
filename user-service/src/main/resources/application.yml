@@ -1,0 +1,9 @@
+jwt:
+  secret: TFGPedroSerrano
+  expiration: 86400000
+
+app:
+  admin:
+    username: admin
+    password: microserviceAdmin1
+
